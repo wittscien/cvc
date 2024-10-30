@@ -96,6 +96,7 @@ void usage() {
   fprintf(stdout, "Options:  -f input <filename> : input filename for [default cpff.input]\n");
   fprintf(stdout, "          -c                  : check propagator residual [default false]\n");
   fprintf(stdout, "          -h                  : this message\n");
+  fprintf(stdout, "          -g niter,dt         : gf step paremeters\n");
   EXIT(0);
 }
 
@@ -107,8 +108,6 @@ void usage() {
 int main(int argc, char **argv) {
   
   const char outfile_prefix[] = "loop_gf";
-
-  const char flavor_tag[4] = { 'u', 'd', 's', 'c' };
 
   int c;
   int filename_set = 0;
@@ -154,15 +153,11 @@ int main(int argc, char **argv) {
   gf_dt_list[9] = 0.01;
 #endif  // of if 0
 
-#ifdef HAVE_LHPC_AFF
-  struct AffWriter_s *affw = NULL;
-#endif
-
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "sSch?f:")) != -1) {
+  while ((c = getopt(argc, argv, "sSch?f:g:")) != -1) {
     switch (c) {
     case 'f':
       strcpy(filename, optarg);
@@ -176,6 +171,17 @@ int main(int argc, char **argv) {
       break;
     case 'S':
       write_scalar_field = 1;
+      break;
+    case 'g':
+      if ( gf_nstep == MAX_NUM_GF_NSTEP )
+      {
+        fprintf ( stderr, "[loop_gf_invert_contract] maximal number gf steps reached \n");
+        EXIT(1);
+      }
+      sscanf( optarg, "%d,%lf", gf_niter_list + gf_nstep, gf_dt_list + gf_nstep );
+      fprintf(stdout, "# [loop_gf_invert_contract.cpp] set gf step %4d   iter %4d   dt %e\n",
+          gf_nstep, gf_niter_list[gf_nstep], gf_dt_list[gf_nstep] );
+      gf_nstep++;
       break;
     case 'h':
     case '?':
@@ -370,9 +376,13 @@ int main(int argc, char **argv) {
   /***************************************************************************
    * prepare the Fourier phase field
    ***************************************************************************/
+#if _USE_TIME_DILUTION
   unsigned int const VOL3 = LX * LY * LZ;
+#endif
   size_t const sizeof_spinor_field = _GSI( VOLUME ) * sizeof( double );
+#ifdef _GFLOW_CVC
   size_t const sizeof_gauge_field = 72 * VOLUME  * sizeof( double );
+#endif
 
   /***************************************************************************
    * init rng state
@@ -841,7 +851,7 @@ int main(int argc, char **argv) {
       /***************************************************************************
        * write loop field to lime file
        ***************************************************************************/
-      sprintf( filename, "loop.up.c%d.N%d.tau%6.4f.lime", Nconf, isample, gf_tau );
+      sprintf( filename, "%s.up.c%d.N%d.tau%6.4f.lime", outfile_prefix, Nconf, isample, gf_tau );
       char loop_type[2000];
 
       sprintf( loop_type, "<source_type>%d</source_type><noise_type>%d</noise_type><dilution_type>spin-color</dilution_type>", g_source_type, g_noise_type );
