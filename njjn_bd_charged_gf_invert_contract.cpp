@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
 
   const char flavor_tag[4] = { 'u', 'd', 's', 'c' };
 
-  const int sequential_gamma_sets = 1;
+  const int sequential_gamma_sets = 4;
   int const sequential_gamma_num[4] = {4, 4, 1, 1};
 
   char const sequential_gamma_tag[4][3] = { "vv", "aa", "ss", "pp" };
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
   int first_solve_dummy = 1;
 
   /* for gradient flow */
-  int gf_niter = 2;
+  int gf_niter = 20;
   int gf_ns = 1;
   double gf_dt = 0.01;
   double gf_tau = 0.;

@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 
   const char flavor_tag[4] = { 'u', 'd', 's', 'c' };
 
-  const int sequential_gamma_sets = 1;
+  const int sequential_gamma_sets = 2;
   int const sequential_gamma_num[2] = {4, 4};
   int const sequential_gamma_id[2][4] = {
     { 0,  1,  2,  3 },
