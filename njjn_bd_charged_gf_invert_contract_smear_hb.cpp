@@ -494,12 +494,12 @@ int main(int argc, char **argv) {
 
   }  // end of if first_solve_dummy
 
+
   // Haobo: copied from njjn_bd_charged_invert_contract.cpp
   /***********************************************
    * if we want to use Jacobi smearing, we need 
    * smeared gauge field
    ***********************************************/
-    std::cout<<"Haobo: Gauge field before smearing: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
   if( N_Jacobi > 0 ) {
 
 #ifndef _SMEAR_QUDA 
@@ -533,7 +533,7 @@ int main(int argc, char **argv) {
     }
 #endif
   }  /* end of if N_Jacobi > 0 */
-  std::cout<<"Haobo: Gauge field after smearing: "<<gauge_field_smeared[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+
 
   /***************************************************************************
    * set to flowed links from now on, upload gauge field
@@ -1164,7 +1164,9 @@ int main(int argc, char **argv) {
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
-                _performGFlowForward ( sequential_propagator[isc], sequential_propagator[isc], &smear_param, 0 );
+                // Haobo
+                // _performGFlowForward ( sequential_propagator[isc], sequential_propagator[isc], &smear_param, 0 );
+                Jacobi_Smearing(gauge_field_smeared, sequential_propagator[isc], N_Jacobi, kappa_Jacobi);
 #ifdef _TEST_TIMER
                 gettimeofday ( &tb, (struct timezone *)NULL );
                 show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );

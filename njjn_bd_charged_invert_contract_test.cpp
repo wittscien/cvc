@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
     EXIT(7);
   }
 
-  std::cout<<"Haobo: Gauge field: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+  // std::cout<<"Haobo: Gauge field: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
 
 
 #endif
@@ -763,7 +763,7 @@ int main(int argc, char **argv) {
       }
     }
     // Haobo: different from convention of propagator, this is [spaetime][snk sc][src sc]
-    std::cout<<"Haobo: loop: "<<creal(loop[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
+    // std::cout<<"Haobo: loop: "<<creal(loop[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
 
     /***************************************************************************
      * write loop field to lime file
