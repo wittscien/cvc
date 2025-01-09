@@ -559,7 +559,7 @@ int main(int argc, char **argv) {
   smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
   smear_param.restart       = QUDA_BOOLEAN_FALSE;
   // Aniket
-  smear_param.restart = QUDA_BOOLEAN_FALSE;
+  // smear_param.restart = QUDA_BOOLEAN_FALSE;
 
   gf_tau = gf_niter * gf_dt;
 
@@ -720,7 +720,7 @@ int main(int argc, char **argv) {
       smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
       smear_param.restart       = QUDA_BOOLEAN_TRUE;
       // Aniket
-      smear_param.restart = QUDA_BOOLEAN_FALSE;
+      // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
       gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -783,7 +783,7 @@ int main(int argc, char **argv) {
         smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
         smear_param.restart       = QUDA_BOOLEAN_TRUE;
         // Aniket
-        smear_param.restart = QUDA_BOOLEAN_FALSE;
+        // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
         gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1122,7 +1122,7 @@ int main(int argc, char **argv) {
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
                 // Aniket
-                smear_param.restart = QUDA_BOOLEAN_FALSE;
+                // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1160,7 +1160,7 @@ int main(int argc, char **argv) {
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
                 // Aniket
-                smear_param.restart = QUDA_BOOLEAN_FALSE;
+                // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif

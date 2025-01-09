@@ -49,6 +49,7 @@ extern "C"
 #include "io.h"
 #include "propagator_io.h"
 #include "read_input_parser.h"
+#include "smearing_techniques.h"
 #include "contractions_io.h"
 #include "Q_clover_phi.h"
 #include "prepare_source.h"
@@ -227,6 +228,7 @@ int main(int argc, char **argv) {
   char filename[400];
   double **lmzz[2] = { NULL, NULL }, **lmzzinv[2] = { NULL, NULL };
   double *gauge_field_with_phase = NULL;
+  double *gauge_field_smeared = NULL;
   struct timeval ta, tb, start_time, end_time;
 
   /*
@@ -598,6 +600,47 @@ int main(int argc, char **argv) {
 
   }  // end of if first_solve_dummy
 
+
+  // Haobo: copied from njjn_bd_charged_invert_contract.cpp
+  /***********************************************
+   * if we want to use Jacobi smearing, we need 
+   * smeared gauge field
+   ***********************************************/
+  if( N_Jacobi > 0 ) {
+
+#ifndef _SMEAR_QUDA 
+
+    alloc_gauge_field ( &gauge_field_smeared, VOLUMEPLUSRAND);
+
+    memcpy ( gauge_field_smeared, g_gauge_field, 72*VOLUME*sizeof(double));
+
+    if ( N_ape > 0 ) {
+#endif
+      exitstatus = APE_Smearing(gauge_field_smeared, alpha_ape, N_ape);
+      if(exitstatus != 0) {
+        fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from APE_Smearing, status was %d\n", exitstatus);
+        EXIT(47);
+      }
+#ifndef _SMEAR_QUDA 
+    }  /* end of if N_ape > 0 */
+
+    /***********************************************
+     * check plaquette value after APE smearing
+     *
+     * ONLY IF NOT SMEARING ON DEVICE
+     * in case of smearing on device, there is
+     * not any non-NULL smeared gauge field 
+     * pointer on host
+     ***********************************************/
+    exitstatus = plaquetteria( gauge_field_smeared );
+    if( exitstatus != 0 ) {
+      fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from plaquetteria, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
+      EXIT(2);
+    }
+#endif
+  }  /* end of if N_Jacobi > 0 */
+
+
   /***************************************************************************
    * set to flowed links from now on, upload gauge field
    ***************************************************************************/
@@ -622,7 +665,7 @@ int main(int argc, char **argv) {
   smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
   smear_param.restart       = QUDA_BOOLEAN_FALSE;
   // Aniket
-  smear_param.restart = QUDA_BOOLEAN_FALSE;
+  // smear_param.restart = QUDA_BOOLEAN_FALSE;
 
   gf_tau = gf_niter * gf_dt;
 
@@ -781,10 +824,14 @@ int main(int argc, char **argv) {
       smear_param.meas_interval = 1;
       smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
       smear_param.restart       = QUDA_BOOLEAN_TRUE;
+    // Aniket
+    // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
       gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
-      _performGFlowAdjoint ( point_source_flowed, point_source_flowed, &smear_param, gf_niter, gf_nb, gf_ns );
+      // Haobo
+    //   _performGFlowAdjoint ( point_source_flowed, point_source_flowed, &smear_param, gf_niter, gf_nb, gf_ns );
+      Jacobi_Smearing(gauge_field_smeared, point_source_flowed, N_Jacobi, kappa_Jacobi);
 #ifdef _TEST_TIMER
       gettimeofday ( &tb, (struct timezone *)NULL );
       show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "_performGFlowAdjoint-restart", g_cart_id == 0 );
@@ -822,6 +869,8 @@ int main(int argc, char **argv) {
         smear_param.meas_interval = 1;
         smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
         smear_param.restart       = QUDA_BOOLEAN_TRUE;
+        // Aniket
+        // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
         gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1012,7 +1061,7 @@ int main(int argc, char **argv) {
                   scalar_field[isample],
                   sequential_gamma_id[igs][ig], icol1, icol2 );
               // Haobo
-              std::cout<<"Haobo: sequential source: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
+            //   std::cout<<"Haobo: sequential source: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
               if ( exitstatus != 0 ) 
               {
@@ -1034,6 +1083,8 @@ int main(int argc, char **argv) {
                 smear_param.meas_interval = 1;
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
+                // Aniket
+                // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1044,7 +1095,7 @@ int main(int argc, char **argv) {
 #endif
               }
               // Haobo
-              std::cout<<"Haobo: sequential source flowed: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
+            //   std::cout<<"Haobo: sequential source flowed: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
               /***************************************************************************
                * seq. prop. from seq. source
@@ -1062,7 +1113,7 @@ int main(int argc, char **argv) {
                 EXIT(123);
               }
               // Haobo
-              std::cout<<"Haobo: sequential prop: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
+            //   std::cout<<"Haobo: sequential prop: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 #if _TEST_TIMER
               gettimeofday ( &tb, (struct timezone *)NULL );
               show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "sequential-source-w-invert-check", g_cart_id == 0 );
@@ -1077,18 +1128,22 @@ int main(int argc, char **argv) {
                 smear_param.meas_interval = 1;
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
+                // Aniket
+                // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
-                _performGFlowForward ( sequential_propagator[iflavor][iflavor2][icol1][icol2][isc], sequential_propagator[iflavor][iflavor2][icol1][icol2][isc],
-                    &smear_param, 0 );
+                // Haobo
+                // _performGFlowForward ( sequential_propagator[iflavor][iflavor2][icol1][icol2][isc], sequential_propagator[iflavor][iflavor2][icol1][icol2][isc],
+                //     &smear_param, 0 );
+                Jacobi_Smearing(gauge_field_smeared, sequential_propagator[iflavor][iflavor2][icol1][icol2][isc], N_Jacobi, kappa_Jacobi);
 #ifdef _TEST_TIMER
                 gettimeofday ( &tb, (struct timezone *)NULL );
                 show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );
 #endif
               }
               // Haobo: checked
-              std::cout<<"Haobo: sequential prop flowed: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
+            //   std::cout<<"Haobo: sequential prop flowed: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
             }}  /* end of loop on color components */
 
