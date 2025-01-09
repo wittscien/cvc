@@ -5,6 +5,7 @@
  ***************************************************************************/
 
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -98,6 +99,8 @@ static inline int reduce_project_write ( double ** vx, double *** vp, fermion_pr
     fprintf(stderr, "[reduce_project_write] Error from reduce, status was %d %s %d\n", exitstatus, __FILE__, __LINE__ );
     return( 1 );
   }
+  // Haobo
+  // std::cout<<"Haobo: vx: "<<vx[((4*LX+0)*LY+3)*LZ+2][(1*4+3)*2+0]<<std::endl;
 
   /* (partial) Fourier transform, projection from position space to a (small) subset of momentum space */
   exitstatus = contract_vn_momentum_projection ( vp, vx, nd, momentum_list, momentum_number);
@@ -105,6 +108,8 @@ static inline int reduce_project_write ( double ** vx, double *** vp, fermion_pr
     fprintf(stderr, "[reduce_project_write] Error from contract_vn_momentum_projection, status was %d %s %d\n", exitstatus, __FILE__, __LINE__ );
     return( 2 );
   }
+  // Haobo
+  // std::cout<<"Haobo: vp: "<<vp[4][0][(1*4+3)*2+0]<<std::endl;
 
 #if defined HAVE_LHPC_AFF
   /* write to AFF file */
@@ -339,6 +344,31 @@ int main(int argc, char **argv) {
   Nconf = g_tmLQCD_lat.nstore;
   if(g_cart_id== 0) fprintf(stdout, "[njjn_bd_charged_invert_contract] Nconf = %d\n", Nconf);
 
+  // //haobo: this does not work because the tmlqcd does not know the gauge field.
+  // alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
+  //   /* initialize random matrices */
+  //   if(g_cart_id==0) fprintf(stdout, "\n# [njjn_bd_charged_invert_contract] initializing unit matrices\n");
+  //   exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+
+  // // exitstatus = tmLQCD_read_gauge(Nconf);
+  // // if(exitstatus != 0) {
+  // //   EXIT(5);
+  // // }
+
+  // exitstatus = tmLQCD_get_gauge_field_pointer( &g_gauge_field );
+  // if(exitstatus != 0) {
+  //   EXIT(6);
+  // }
+  // if( g_gauge_field == NULL) {
+  //   fprintf(stderr, "[njjn_bd_charged_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
+  //   EXIT(7);
+  // }
+
+
+
+  Nconf = g_tmLQCD_lat.nstore;
+  if(g_cart_id== 0) fprintf(stdout, "[njjn_bd_charged_gf_invert_contract] Nconf = %d\n", Nconf);
+
   exitstatus = tmLQCD_read_gauge(Nconf);
   if(exitstatus != 0) {
     EXIT(5);
@@ -348,10 +378,15 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
+    exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
-    fprintf(stderr, "[njjn_bd_charged_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
   }
+
+  std::cout<<"Haobo: Gauge field: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+
+
 #endif
 
   /***********************************************************
@@ -461,6 +496,10 @@ int main(int argc, char **argv) {
      * draw a stochastic binary source (real, +/1 one per site )
      ***************************************************************************/
     ranbinary ( scalar_field[0][0], 2 * g_coherent_source_number * g_nsample_oet * VOLUME );
+    // Haobo
+    // my_scalar_field ( scalar_field[0][0], VOLUME );
+    // std::cout<<"Haobo: scalar field: "<<scalar_field[0][0][((((3*LX+0)*LY+3)*LZ+2))*2+0]<<std::endl;
+    // std::cout<<g_coherent_source_number<<g_coherent_source_number<<std::endl;
 
     /***************************************************************************
      * write loop field to lime file
@@ -493,6 +532,33 @@ int main(int argc, char **argv) {
     }
   }  /* end of if read scalar field */
 
+
+
+  // Haobo: checked
+  // double ** spinor_work = init_2level_dtable ( 3, _GSI( VOLUME+RAND ) );
+  // memset ( spinor_work[0], 0, sizeof_spinor_field );
+  // memset ( spinor_work[1], 0, sizeof_spinor_field );
+  // exitstatus = my_spinor_field ( spinor_work[0], VOLUME );
+  // std::cout<<"Haobo: spinor random: "<<spinor_work[0][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+  // check_residual_clover ( &(spinor_work[0]), &(spinor_work[1]), gauge_field_with_phase, lmzz[0], 1 );
+
+
+
+
+  // Haobo: checked
+  // double ** spinor_work = init_2level_dtable ( 3, _GSI( VOLUME+RAND ) );
+  // memset ( spinor_work[0], 0, sizeof_spinor_field );
+  // memset ( spinor_work[1], 0, sizeof_spinor_field );
+  // my_spinor_field ( spinor_work[0], VOLUME );
+  // // random_spinor_field ( spinor_work[0], VOLUME );
+  // memcpy ( spinor_work[2], spinor_work[0], sizeof_spinor_field );
+  // std::cout<<"Haobo: spinor random: "<<spinor_work[0][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+  // _TMLQCD_INVERT ( spinor_work[1], spinor_work[0], _OP_ID_UP );
+  // std::cout<<"Haobo: invert check: "<<spinor_work[1][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+  // check_residual_clover ( &(spinor_work[1]), &(spinor_work[2]), gauge_field_with_phase, lmzz[_OP_ID_UP], 1 );
+
+
+
   /***************************************************************************
    ***************************************************************************
    **
@@ -507,6 +573,8 @@ int main(int argc, char **argv) {
 
   double _Complex *** loop = NULL;
 
+//Haobo
+// std::cout<<"_USE_TIME_DILUTION = "<<_USE_TIME_DILUTION;
 #if _PART_Ia
   loop = init_3level_ztable ( VOLUME, 12, 12 );
   if ( loop  == NULL ) {
@@ -590,6 +658,8 @@ int main(int argc, char **argv) {
               spinor_work[0][ iy    ] = scalar_field[0][isample][ 2 * ix     ];
               spinor_work[0][ iy + 1] = scalar_field[0][isample][ 2 * ix + 1 ];
             }
+            // Haobo
+            // std::cout<<"Haobo: spinor for loop (no time dilution): "<<isc<<": "<<spinor_work[0][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
 #endif
             /* tm-rotate stochastic propagator at source, in-place */
             if( g_fermion_type == _TM_FERMION ) {
@@ -692,6 +762,8 @@ int main(int argc, char **argv) {
         loop[0][0][ix] *= norm;
       }
     }
+    // Haobo: different from convention of propagator, this is [spaetime][snk sc][src sc]
+    std::cout<<"Haobo: loop: "<<creal(loop[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
 
     /***************************************************************************
      * write loop field to lime file
@@ -781,6 +853,13 @@ int main(int argc, char **argv) {
         fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from APE_Smearing, status was %d\n", exitstatus);
         EXIT(47);
       }
+      // Haobo: checked
+      // std::cout<<"Haobo: APE smearing: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+      // std::cout<<"Haobo: APE smearing: "<<gauge_field_smeared[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+      // std::cout<<"Haobo: BC: "<<gauge_field_with_phase[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+    // double * buffer = init_1level_dtable ( 288 * VOLUME );
+    //   stout_smear_inplace (g_gauge_field, 10, 0.1, buffer );
+    //   std::cout<<"Haobo: Stout smearing: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
 #ifndef _SMEAR_QUDA 
     }  /* end of if N_ape > 0 */
 
@@ -928,6 +1007,8 @@ int main(int argc, char **argv) {
          ***********************************************************/
         /*                                     output field         src coords flavor type  src smear  sink smear gauge field for smearing,  for residual check ...                                   */
         exitstatus = point_source_propagator ( propagator[icoh][iflavor], csx,       iflavor,     1,         0,         gauge_field_smeared,       check_propagator_residual, gauge_field_with_phase, lmzz );
+        // Haobo: checked
+        // std::cout<<"Haobo: point source propagator src smeared: "<<propagator[icoh][iflavor][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+0)*3+1)*2+0]<<std::endl;
         if(exitstatus != 0) {
           fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from point_source_propagator, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
           EXIT(12);
@@ -954,6 +1035,8 @@ int main(int argc, char **argv) {
             return(11);
           }
         }
+        // Haobo: checked
+        // std::cout<<"Haobo: point source propagator snk src smeared: "<<propagator_snk_smeared[icoh][iflavor][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+0)*3+1)*2+0]<<std::endl;
       
         gettimeofday ( &tb, (struct timezone *)NULL );
         show_time ( &ta, &tb, "njjn_bd_charged_invert_contract", "forward-light-sink-smear", g_cart_id == 0 );
@@ -1032,6 +1115,8 @@ int main(int argc, char **argv) {
          * in propagator of flavor X
          ***************************************************************************/
         assign_fermion_propagator_from_spinor_field ( fp, propagator_snk_smeared[icoh][iflavor], VOLUME);
+          // Haobo: I think: [snk spaetime][src sc][snk sc], checked
+        // std::cout<<"Haobo: fp, u quark: "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
 
         /***************************************************************************
          * fill fp2 with 12 spinor fields from propagator of flavor Xb
@@ -1055,6 +1140,9 @@ int main(int argc, char **argv) {
           fermion_propagator_field_eq_fermion_propagator_field_ti_gamma ( fp3, gamma_f1_list[if1], fp3, VOLUME );
 
           fermion_propagator_field_eq_fermion_propagator_field_ti_re    ( fp3, fp3, -gamma_f1_sign[if1]*gamma_f1_sign[if2], VOLUME );
+
+          // Haobo: checked
+          // std::cout<<"Haobo: cg5 S cg5: "<<fp3[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
 
           /***************************************************************************
            * diagram n1
@@ -1381,7 +1469,7 @@ int main(int argc, char **argv) {
                   sprintf(aff_tag, "/%s/Gf_%s/Gi_%s/t1", aff_tag_prefix, gamma_id_to_Cg_ascii[ gamma_f1_list[if2] ], gamma_id_to_Cg_ascii[ gamma_f1_list[if1] ] );
    
                   /*                                          seq  u   d   */
-                  exitstatus = reduce_project_write ( vx, vp, fp2, fp, fp3, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
+                  // exitstatus = reduce_project_write ( vx, vp, fp2, fp, fp3, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
                   if ( exitstatus != 0 ) {
                     fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from reduce_project_write, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
                     EXIT(48);
@@ -1392,7 +1480,7 @@ int main(int argc, char **argv) {
                    ***************************************************************************/
                   sprintf(aff_tag, "/%s/Gf_%s/Gi_%s/t2", aff_tag_prefix, gamma_id_to_Cg_ascii[ gamma_f1_list[if2] ], gamma_id_to_Cg_ascii[ gamma_f1_list[if1] ] );
         
-                  exitstatus = reduce_project_write ( vx, vp, fp2, fp, fp3, contract_v6, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
+                  // exitstatus = reduce_project_write ( vx, vp, fp2, fp, fp3, contract_v6, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
                   if ( exitstatus != 0 ) {
                     fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from reduce_project_write, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
                     EXIT(48);
@@ -1404,7 +1492,7 @@ int main(int argc, char **argv) {
                   sprintf(aff_tag, "/%s/Gf_%s/Gi_%s/t1", aff_tag_prefix2, gamma_id_to_Cg_ascii[ gamma_f1_list[if2] ], gamma_id_to_Cg_ascii[ gamma_f1_list[if1] ] );
        
                   /*                                          u   seq  d  */
-                  exitstatus = reduce_project_write ( vx, vp, fp, fp2, fp3, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
+                  // exitstatus = reduce_project_write ( vx, vp, fp, fp2, fp3, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
                   if ( exitstatus != 0 ) {
                     fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from reduce_project_write, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
                     EXIT(48);
@@ -1416,7 +1504,7 @@ int main(int argc, char **argv) {
                   sprintf(aff_tag, "/%s/Gf_%s/Gi_%s/t1", aff_tag_prefix3, gamma_id_to_Cg_ascii[ gamma_f1_list[if2] ], gamma_id_to_Cg_ascii[ gamma_f1_list[if1] ] );
      
                   /*                                          u   d    seq */
-                  exitstatus = reduce_project_write ( vx, vp, fp, fp3, fp2, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
+                  // exitstatus = reduce_project_write ( vx, vp, fp, fp3, fp2, contract_v5, affw, aff_tag, g_sink_momentum_list, g_sink_momentum_number, 16, VOLUME, io_proc );
                   if ( exitstatus != 0 ) {
                     fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from reduce_project_write, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
                     EXIT(48);

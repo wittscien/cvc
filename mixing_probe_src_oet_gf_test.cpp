@@ -5,6 +5,7 @@
  *
  ***************************************************************************/
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -566,6 +567,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
+  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[mixing_probe_src_oet_gf] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
@@ -776,13 +778,17 @@ int main(int argc, char **argv) {
    * TEST choice of gf iterations and discretization
    *
    ***************************************************************************/
-  gf_nstep = 2;
-  gf_niter_list[0] = 0;
-  gf_niter_list[1] = 3;
-  //gf_niter_list[2] = 3;
+  // gf_nstep = 2;
+  // gf_niter_list[0] = 0;
+  // gf_niter_list[1] = 3;
+  // //gf_niter_list[2] = 3;
+  // gf_dt_list[0] = 0.01;
+  // gf_dt_list[1] = 0.01;
+  // //gf_dt_list[2] = 0.01;
+  gf_nstep = 1;
+
+  gf_niter_list[0] = 1;
   gf_dt_list[0] = 0.01;
-  gf_dt_list[1] = 0.01;
-  //gf_dt_list[2] = 0.01;
 
 
 #if _USE_POINT_SOURCE
@@ -805,7 +811,8 @@ int main(int argc, char **argv) {
   for ( int isample = 0; isample < g_source_location_number; isample ++ )
 #endif
   {
-
+//Haobo
+// std::cout<<"Haobo: "<<g_source_location_number<<std::endl;
 #if _USE_STOCHASTIC_OET
     /***************************************************************************
      * random source timeslice
@@ -1000,15 +1007,19 @@ int main(int argc, char **argv) {
     /***************************************************************************
      * Contractions with mixing operators at source and sink, zero flowtime
      ***************************************************************************/
+    //Haobo
+    std::cout<<"Haobo: prop u: "<<propagator[0][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
     for ( int ifl1 = 0; ifl1 < 2; ifl1++ )
     {
       for ( int ifl2 = 0; ifl2 < 2; ifl2++ )
       {
         for ( int igamma = 0; igamma < 16; igamma++)
         {
-          sprintf ( tag, "/mx/f%d-%s-f%d-%s/m", ifl2, gamma_id_to_ascii[igamma], ifl1, gamma_id_to_ascii[igamma] );
+          sprintf ( tag, "/mx/tau0.0000/f%d-%s-f%d-%s/m", ifl2, gamma_id_to_ascii[igamma], ifl1, gamma_id_to_ascii[igamma] );
           memset( contr, 0, 2 * T * sizeof(double) );
           contract_twopoint_dev_cpff_gf ( contr, igamma, igamma, propagator[1-ifl2], propagator[ifl1], spin_dilution, color_dilution );
+          //Haobo
+          std::cout<<"Haobo: contr t=0: "<<ifl1<<" "<<ifl2<<" "<<igamma<<" "<<contr[3*2+0]<<std::endl;
 
           exitstatus = contract_write_to_h5_file ( &contr, output_filename, tag, &pf, 1, io_proc );
           if(exitstatus != 0) {
@@ -1079,6 +1090,8 @@ int main(int argc, char **argv) {
         smear_param.epsilon       = gf_dt;
         smear_param.meas_interval = 1;
         smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
+        // Aniket
+        smear_param.restart = QUDA_BOOLEAN_FALSE;
 #endif
 
         for ( int iflavor = 0; iflavor < 2; iflavor++ )
@@ -1108,6 +1121,8 @@ int main(int argc, char **argv) {
             sprintf ( tag, "/mx/tau%6.4f/f%d-%s-f%d-%s/m", gf_tau, ifl2, gamma_id_to_ascii[igamma], ifl1, gamma_id_to_ascii[igamma] );
             memset( contr, 0, 2 * T * sizeof(double) );
             contract_twopoint_dev_cpff_gf ( contr, igamma, igamma, propagator_gf[1-ifl2], propagator_gf[ifl1], spin_dilution, color_dilution );
+          //Haobo
+          std::cout<<"Haobo: contr t!=0: "<<ifl1<<" "<<ifl2<<" "<<igamma<<" "<<contr[3*2+0]<<std::endl;
 
             exitstatus = contract_write_to_h5_file ( &contr, output_filename, tag, &pf, 1, io_proc );
             if(exitstatus != 0) {
@@ -1123,7 +1138,7 @@ int main(int argc, char **argv) {
 
       for ( int iloop_sample = 0; iloop_sample < g_nsample; iloop_sample++ )
       {
-        sprintf ( filename, "loop.up.c%d.N%d.tau%6.4f.lime", Nconf, iloop_sample, gf_tau );
+        sprintf ( filename, "loop_gf.up.c%d.N%d.tau%6.4f.lime", Nconf, iloop_sample, gf_tau );
         
         exitstatus = read_lime_contraction ( (double*)(loop[0][0]), filename, 144, 0 );
         if ( exitstatus != 0  ) {
@@ -1157,11 +1172,15 @@ int main(int argc, char **argv) {
              * qb: build gamma_mu L gamma_mu
              ***********************************************************/
             qb_b_glg ( gloopg, loop, gamma_list[igamma] );
-  
+            //Haobo
+            std::cout<<"Haobo: qb_b_glg: "<<iflavor<<" "<<igamma<<" "<<creal(gloopg[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
+    
             /***********************************************************
              * qb: loop x prop
              ***********************************************************/
             xx_glg_prop ( b_propagator_gf[iflavor], propagator_gf[iflavor], gloopg, spin_color_dilution );
+            //Haobo
+            std::cout<<"Haobo: xx_glg_prop: "<<iflavor<<" "<<igamma<<" "<<b_propagator_gf[iflavor][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
   
             for ( int igx = 4; igx <= 5; igx++ )
             {
@@ -1171,7 +1190,10 @@ int main(int argc, char **argv) {
               sprintf ( tag, "/qb/tau%6.4f/ns%d/f%d-%s-f%d-%s/b", gf_tau, iloop_sample, iflavor, gamma_tag[igamma], iflavor, gamma_id_to_ascii[igx] );
               memset( contr, 0, 2 * T * sizeof(double) );
               contract_twopoint_dev_cpff_gf ( contr, igx, 4, propagator_gf[1-iflavor], b_propagator_gf[iflavor], spin_dilution, color_dilution );
-  
+              //Haobo
+              std::cout<<"Haobo: contr mx 1: "<<iflavor<<" "<<igamma<<" "<<igamma<<" "<<igx<<" "<<contr[3*2+0]<<std::endl;
+              std::cout<<"Haobo: contr mx 1: "<<iflavor<<" "<<igamma<<" "<<igamma<<" "<<igx<<" "<<contr[3*2+1]<<std::endl;
+
               exitstatus = contract_write_to_h5_file ( &contr, output_filename, tag, &pf, 1, io_proc );
               if(exitstatus != 0) {
                 fprintf(stderr, "[mixing_probe_src_oet_gf] Error from contract_write_to_file, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
@@ -1184,6 +1206,8 @@ int main(int argc, char **argv) {
               sprintf ( tag, "/qb/tau%6.4f/ns%d/f%d-%s-f%d-%s/b", gf_tau, iloop_sample, 1-iflavor, gamma_tag[igamma], iflavor, gamma_id_to_ascii[igx] );
               memset( contr, 0, 2 * T * sizeof(double) );
               contract_twopoint_dev_cpff_gf ( contr, igx, 4, propagator_gf[iflavor], b_propagator_gf[iflavor], spin_dilution, color_dilution );
+              //Haobo
+              std::cout<<"Haobo: contr mx 2: "<<iflavor<<" "<<igamma<<" "<<igamma<<" "<<igx<<" "<<contr[3*2+0]<<std::endl;
   
               exitstatus = contract_write_to_h5_file ( &contr, output_filename, tag, &pf, 1, io_proc );
               if(exitstatus != 0) {
@@ -1219,6 +1243,8 @@ int main(int argc, char **argv) {
              * cc: build gamma_mu tr_{color} [L] gamma_mu
              ***********************************************************/
             cc_b_glg ( gloopg, loop, gamma_list[igamma] );
+            //Haobo
+            std::cout<<"Haobo: cc_b_glg: "<<iflavor<<" "<<igamma<<" "<<creal(gloopg[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
   
             /***********************************************************
              * cc: loop x prop
@@ -1288,6 +1314,8 @@ int main(int argc, char **argv) {
              * qb: build tr_{spin,color} [ gamma_mu L ] gamma_mu
              ***********************************************************/
             qb_d_glg ( gloopg, loop, gamma_list[igamma] );
+            //Haobo
+            std::cout<<"Haobo: qb_d_glg: "<<iflavor<<" "<<igamma<<" "<<creal(gloopg[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
   
             /***********************************************************
              * qb D diagram loop x prop 
@@ -1350,6 +1378,8 @@ int main(int argc, char **argv) {
              * cc: build tr_{spin} [ gamma_mu L ] gamma_mu
              ***********************************************************/
             cc_d_glg ( gloopg, loop, gamma_list[igamma] );
+            //Haobo
+            std::cout<<"Haobo: cc_d_glg: "<<iflavor<<" "<<igamma<<" "<<creal(gloopg[((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
   
             /***********************************************************
              * cc: loop x prop

@@ -12,6 +12,8 @@
  * Fri Dec  9 09:28:18 CET 2016
  * ported to cvc
  ******************************************/
+#include <iostream>
+#include <tuple>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +32,37 @@
 #include "smearing_techniques.h"
 
 namespace cvc {
+
+// Function to get t, x, y, z from a linear index
+std::tuple<int, int, int, int> getCoordinates(int ix) {
+    int z = ix % LZ;
+    int iy = ix / LZ;
+    int y = iy % LY;
+    int ix2 = iy / LY;
+    int x = ix2 % LX;
+    int t = ix2 / LX;
+    return std::make_tuple(t, x, y, z);
+}
+
+std::tuple<int, int, int, int, int, int, int, int> getCoordinatesfull(
+    int ix) {
+    int i = ix % 2;
+    int ix1 = ix / 2;
+    int b = ix1 % 3;
+    int ix2 = ix1 / 3;
+    int a = ix2 % 3;
+    int ix3 = ix2 / 3;
+    int mu = ix3 % 4;
+    int ix4 = ix3 / 4;
+    int z = ix4 % LZ;
+    int iy = ix4 / LZ;
+    int y = iy % LY;
+    int ix5 = iy / LY;
+    int x = ix5 % LX;
+    int t = ix5 / LX;
+
+    return std::make_tuple(t, x, y, z, mu, a, b, i);
+}
 
 /************************************************************
  * Performs a number of APE smearing steps
@@ -111,6 +144,11 @@ int APE_Smearing(double *smeared_gauge_field, double const APE_smearing_alpha, i
       _cm_eq_cm_ti_cm(M1, smeared_gauge_field_old + index_my_2, smeared_gauge_field_old + index_my_3);
   
       _cm_eq_cm_dag_ti_cm(M2, smeared_gauge_field_old + index_my_1, M1);
+      // Haobo: checked
+      // auto [t0, x0, y0, z0] = getCoordinates(idx);
+      // auto [t, x, y, z, mu, a, b, i] = getCoordinatesfull(index_my_2);
+      // std::cout<<"Haobo: Haobo: APE smearing in: "<<idx<<":"<<t0<<","<<x0<<","<<y0<<","<<z0 << " ||| "<<index_my_3<<":"<<g_idn[g_iup[idx][1]][2]<<":"<<t<<","<<x<<","<<y<<","<<z<<","<<mu<<","<<a<<","<<b<<","<<i << std::endl;
+      // if (idx == (((3*LX+0)*LY+3)*LZ+2)) { std::cout<<"Haobo: APE smearing in: "<<*(M2) << std::endl;}
       _cm_pl_eq_cm(U, M2);
   
       /* positive y-direction */
@@ -136,8 +174,12 @@ int APE_Smearing(double *smeared_gauge_field, double const APE_smearing_alpha, i
       /* center */
       _cm_pl_eq_cm(U, smeared_gauge_field_old + index);
   
+      // Haobo: checked
+      // if (idx == (((3*LX+0)*LY+3)*LZ+2)) { std::cout<<"Haobo: APE smearing in: "<<*(U) << std::endl;}
       /* Projection to SU(3). */
       cm_proj(U);
+      // Haobo: checked
+      // if (idx == (((3*LX+0)*LY+3)*LZ+2)) { std::cout<<"Haobo: APE smearing in: "<<*(U) << std::endl;}
   
   
       /***********************

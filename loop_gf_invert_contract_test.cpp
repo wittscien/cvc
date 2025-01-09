@@ -4,6 +4,7 @@
  *
  ***************************************************************************/
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -310,6 +311,10 @@ int main(int argc, char **argv) {
     fprintf(stderr, "[loop_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
   }
+
+  // Haobo
+  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+
 #endif
 
   /***********************************************************
@@ -446,6 +451,10 @@ int main(int argc, char **argv) {
      * draw a stochastic binary source (real, +/1 one per site )
      ***************************************************************************/
     ranbinary ( scalar_field[0], 2 * g_nsample * VOLUME );
+    // Haobo
+    my_scalar_field ( scalar_field[0], VOLUME );
+
+
     //for ( unsigned int ix = 0; ix < g_nsample * VOLUME; ix++ )
     //{
     //  scalar_field[0][2*ix] = 1.;
@@ -731,6 +740,8 @@ int main(int argc, char **argv) {
               smear_param.epsilon       = gf_dt;
               smear_param.meas_interval = 1;
               smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
+              // Aniket
+              smear_param.restart = QUDA_BOOLEAN_FALSE;
 
               /***************************************************************************
 	       * flow the stochastic source
@@ -765,6 +776,12 @@ int main(int argc, char **argv) {
               /* update resident gaugeFlowed */
 #ifdef _GFLOW_QUDA
               _performGFlowForward ( spinor_work[1], spinor_work[1], &smear_param, 1 );
+
+  // Haobo: this means the h_gauge is always 0.01 * 2, not updated as gf_nstep goes.
+  // saveGaugeQuda ( h_gauge, &gauge_param );
+  // gauge_field_qdp_to_cvc ( gauge_field_aux, h_gauge );
+  // xchange_gauge_field( gauge_field_aux );
+  // std::cout<<"Haobo: Gauge field flowed: "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
 
 #if _TEST_PLAQUETTE
               saveGaugeQuda ( h_gauge, &gauge_param );
@@ -839,6 +856,10 @@ int main(int argc, char **argv) {
 #endif
 
     double gf_tau = 0;
+
+    // Haobo: 0.01 * 4 = 0.04
+    std::cout<<"Haobo: loop[0]: "<<creal(loop[0][((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
+    if (gf_nstep > 1) std::cout<<"Haobo: loop[1]: "<<creal(loop[1][((4*LX+0)*LY+3)*LZ+2][3*3+1][1*3+1])<<std::endl;
 
     /* loop on GF steps */
     for ( int igf = 0; igf < gf_nstep; igf++ )

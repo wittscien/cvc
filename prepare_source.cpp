@@ -9,6 +9,7 @@
  * CHANGES:
  ************************************************/
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -1316,6 +1317,8 @@ int prepare_sequential_fht_loop_source ( double ** const seq_source, double _Com
             M[ka][kb] -= gamma_mat[ig].m[ialpha][ibeta] * ztmp;
           }
         }}
+      // Haobo
+      // if (ix == ((4*LX+0)*LY+3)*LZ+2 and ig==0) {std::cout << "Haobo: in fht source: " << creal(M[0][0]) << std::endl;}
 
       }  /* end of loop on gamma set */
 
@@ -1334,6 +1337,9 @@ int prepare_sequential_fht_loop_source ( double ** const seq_source, double _Com
     /**********************************************************
      * build seq_source <- M x prop 
      **********************************************************/
+    // Haobo
+    // if (ix == ((4*LX+0)*LY+3)*LZ+2) {std::cout << "Haobo: in fht source: " << creal(M[0][0]) << std::endl;}
+    // std::cout<<"Haobo: in fht source prop: "<<prop[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
     for ( int ibeta = 0; ibeta < 4; ibeta++ ) {
     for ( int ib = 0; ib < 3; ib++ ) {
       int const kb = 3 * ibeta + ib;
@@ -1348,7 +1354,11 @@ int prepare_sequential_fht_loop_source ( double ** const seq_source, double _Com
         for ( int ic = 0; ic < 3; ic++ ) {
           int const kc = 3 * igamma + ic;
           ztmp += M[ka][kc] * ( prop[kb][_GSI(ix)+2*kc] + I * prop[kb][_GSI(ix)+2*kc+1] );
+          // Haobo
+          // if ((ix == ((4*LX+0)*LY+3)*LZ+2) and (ialpha==3 and ia == 1 and ibeta==1 and ib==1)) {std::cout << igamma<< ic<< "Haobo: in fht source ztmp: "<<creal(M[ka][kc])<<"     \t" <<creal( prop[kb][_GSI(ix)+2*kc] + I * prop[kb][_GSI(ix)+2*kc+1])<< "\t"<<creal(M[ka][kc] * ( prop[kb][_GSI(ix)+2*kc] + I * prop[kb][_GSI(ix)+2*kc+1] )) << std::endl;}
         }}
+        // Haobo
+        // if ((ix == ((4*LX+0)*LY+3)*LZ+2) and (ialpha==3 and ia == 1 and ibeta==1 and ib==1)) {std::cout << "Haobo: in fht source ztmp: " << creal(ztmp) << std::endl;}
 
         /**********************************************************
          * ztmp = ztmp * exp ( i p_seq x_seq )
@@ -1448,6 +1458,9 @@ int prepare_sequential_fht_twinpeak_source_crossed ( double ** const seq_source,
 
       _fv_eq_gamma_ti_fv ( spinor1, gamma_id, _p );
       _fv_ti_eq_re ( spinor1, scalar_field[2*ix] );
+        // Haobo: checked
+        // if ((ix == ((4*LX+0)*LY+3)*LZ+2) and (isc == 1*3+1)) {std::cout << "Haobo: in twin source: " << _p[(3*3+1)*2] << std::endl;}
+        // if ((ix == ((4*LX+0)*LY+3)*LZ+2) and (isc == 1*3+1)) {std::cout << "Haobo: in twin source: " << spinor1[(3*3+1)*2] << std::endl;}
 
       for ( int mu = 0; mu < 4; mu++ ) {
         _s[ 2*(3*mu+c1)  ] = spinor1[2*(3*mu+c2)  ];

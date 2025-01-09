@@ -2,6 +2,7 @@
  * Q_phi.c
  ********************/
 
+#include <iostream>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -498,6 +499,8 @@ void Hopping_eo(double *s, double *r, double *gauge_field, int EO) {
   /* if EO = 1 => M_oe => r is even => call with 1-EO = 0 for even field argument */
   xchange_eo_field (r, 1-EO);
 #endif
+  // Haobo
+  // std::cout<<"Haobo: in Hopping_eo: "<<gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<"     "<<r[2480]<<std::endl;
 
 #ifdef HAVE_OPENMP
 #pragma omp parallel shared(s,r,gauge_field,EO)
@@ -534,6 +537,7 @@ void Hopping_eo(double *s, double *r, double *gauge_field, int EO) {
     r_fwd_ = r + _GSI(ix_fwd);
     r_bwd_ = r + _GSI(ix_bwd);
 
+    // if (ix == ((3*LX+0)*LY+3)*LZ+2) std::cout<<"Haobo: in Hopping_eo: U_fwd: "<<*(U_fwd)<<std::endl;
     /* s += U_fwd ( 1 - g0 ) r_fwd */
     _fv_eq_gamma_ti_fv(sp1, 0, r_fwd_);
     _fv_eq_fv_mi_fv(sp2, r_fwd_, sp1);
@@ -628,6 +632,8 @@ void Hopping_eo(double *s, double *r, double *gauge_field, int EO) {
 #ifdef HAVE_OPENMP
 }  /* end of parallel region */
 #endif
+  // Haobo
+  // std::cout<<"Haobo: in Hopping_eo: s: "<<s[2480]<<std::endl;
 
 }  /* end of Hopping_eo */
 

@@ -8,6 +8,7 @@
  * TODO:
  ****************************************************/
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -60,6 +61,7 @@ int init_clover ( double *** clover_term, double **(*mzz)[2], double **(*mzzinv)
   }
 
 
+  // std::cout << "Haobo: in init_clover: " << mass << csw << std::endl;
   /***********************************************
    * initialize clover, mzz and mzz_inv
    ***********************************************/

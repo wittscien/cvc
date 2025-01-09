@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * zchi_gf_invert_contract_test
+ * hb_gf_test, from zchi_gf_invert_contract_test
  *
  ***************************************************************************/
 
@@ -396,39 +396,39 @@ int main(int argc, char **argv) {
   /***************************************************************************
    * gradient flow parameters
    ***************************************************************************/
+  gf_nstep = 1;
+  gf_niter_list[0] = 1;
+  gf_dt_list[0] = 0.01;
+
+
+  // Haobo ----------------------------------------------------------------------
+  // The following two ways are different, again the bug due to saving the gauge?
   gf_nstep = 3;
   gf_niter_list[0] = 0;
-  gf_dt_list[0] = 0.01;
-  for( int i = 1; i < gf_nstep; i++ )
-  {
-    gf_niter_list[i] = 1;
-    gf_dt_list[i] = 0.01;
-  }
+  gf_niter_list[1] = 1;
+  gf_niter_list[2] = 1;
+  gf_dt_list[0] = 0.00;
+  gf_dt_list[1] = 0.01;
+  gf_dt_list[2] = 0.01;
 
-  /***************************************************************************
-   * loop on samples
-   * invert and contract loops
-   ***************************************************************************/
-  for ( int isample = 0; isample < g_nsample; isample++ ) 
-  {
+  // gf_nstep = 2;
+  // gf_niter_list[0] = 0;
+  // gf_niter_list[1] = 2;
+  // gf_dt_list[0] = 0.00;
+  // gf_dt_list[1] = 0.01;
+  // Haobo ----------------------------------------------------------------------
+
+  // for( int i = 1; i < gf_nstep; i++ )
+  // {
+  //   gf_niter_list[i] = 1;
+  //   gf_dt_list[i] = 0.01;
+  // }
+
+    int isample = 0;
 
     // Haobo
     // prepare_volume_source ( spinor_work[0], VOLUME );
     exitstatus = my_spinor_field ( spinor_work[0], VOLUME );
-
-    /***************************************************************************
-     * write loop field to lime file
-     ***************************************************************************/
-    if ( write_stochastic_source ) 
-    {
-      sprintf( filename, "source.c%d.N%d.lime", Nconf, isample );
-
-      exitstatus = write_propagator( spinor_work[0], filename, 0, 64 );
-      if ( exitstatus != 0  ) {
-        fprintf ( stderr, "[zchi_gf_invert_contract] Error write_lemon_spinor, status was %d  %s %d\n", exitstatus, __FILE__, __LINE__ );
-        EXIT(12);
-      }
-    }  /* end of if write_stochastic_source */
 
     /***************************************************************************
      * gradient flow in stochastic source and propagator
@@ -444,31 +444,16 @@ int main(int argc, char **argv) {
     if( g_fermion_type == _TM_FERMION ) 
     {
       int const tm_rotation_sign = ( ( g_mu > 0 ) ? 1 : -1 ) * ( 1 - 2 * (_OP_ID_UP ) ) ;
-      if ( g_cart_id == 0 && g_verbose > 2 ) fprintf(stdout, "# [zchi_gf_invert_contract] tm_rotation_sign = %d   %s %d\n", tm_rotation_sign, __FILE__, __LINE__ );
       spinor_field_tm_rotation(spinor_work[2], spinor_work[0], tm_rotation_sign, g_fermion_type, VOLUME);
     }
 
     /* call to (external/dummy) inverter / solver */
     exitstatus = _TMLQCD_INVERT ( spinor_work[1], spinor_work[2], _OP_ID_UP );
-#  if ( defined GPU_DIRECT_SOLVER )
-    if(exitstatus < 0)
-#  else
-    if(exitstatus != 0)
-#  endif
-    {
-      fprintf(stderr, "[zchi_gf_invert_contract] Error from invert, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
-      EXIT(12);
-    }
-
-    if ( check_propagator_residual ) {
-      check_residual_clover ( &(spinor_work[1]), &(spinor_work[2]), gauge_field_with_phase, lmzz[_OP_ID_UP], 1 );
-    }
 
     /* tm-rotate stochastic propagator at sink, in-place */
     if( g_fermion_type == _TM_FERMION ) 
     {
       int const tm_rotation_sign = ( ( g_mu > 0 ) ? 1 : -1 ) * ( 1 - 2 * (_OP_ID_UP ) ) ;
-      if ( g_cart_id == 0 && g_verbose > 2 ) fprintf(stdout, "# [zchi_gf_invert_contract] tm_rotation_sign = %d   %s %d\n", tm_rotation_sign, __FILE__, __LINE__ );
       spinor_field_tm_rotation(spinor_work[1], spinor_work[1], tm_rotation_sign, g_fermion_type, VOLUME);
     }
 
@@ -507,8 +492,6 @@ int main(int argc, char **argv) {
         smear_param.epsilon       = gf_dt;
         smear_param.meas_interval = 1;
         smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
-        // Aniket
-        smear_param.restart = QUDA_BOOLEAN_FALSE;
 
         /***************************************************************************
 	 * flow the stochastic source
@@ -534,13 +517,27 @@ int main(int argc, char **argv) {
         gettimeofday ( &ta, (struct timezone *)NULL );
         /* update resident gaugeFlowed */
 #ifdef _GFLOW_QUDA
-        _performGFlowForward ( spinor_work[1], spinor_work[1], &smear_param, 1 );
+        std::cout<<"Haobo: Gauge field 1: "<<gf_tau<<"  "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+        printf("%.9f", gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]);
 
-        /* download flowed gauge field */
+        smear_param.restart = QUDA_BOOLEAN_FALSE;
+        _performGFlowForward ( spinor_work[1], spinor_work[1], &smear_param, 1 );
         saveGaugeQuda ( h_gauge, &gauge_param );
         gauge_field_qdp_to_cvc ( gauge_field_aux, h_gauge );
+        std::cout<<"Haobo: Gauge field 2: "<<gf_tau<<"  "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+        printf("%.9f", gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]);
 
-        // std::cout<<"Haobo: Gauge field: "<<gf_tau<<"  "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+        _performGFlowForward ( spinor_work[1], spinor_work[1], &smear_param, 1 );
+        saveGaugeQuda ( h_gauge, &gauge_param );
+        gauge_field_qdp_to_cvc ( gauge_field_aux, h_gauge );
+        std::cout<<"Haobo: Gauge field 3: "<<gf_tau<<"  "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+        printf("%.9f", gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]);
+
+        _performGFlowForward ( spinor_work[1], spinor_work[1], &smear_param, 1 );
+        saveGaugeQuda ( h_gauge, &gauge_param );
+        gauge_field_qdp_to_cvc ( gauge_field_aux, h_gauge );
+        std::cout<<"Haobo: Gauge field 4: "<<gf_tau<<"  "<<gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+        printf("%.9f", gauge_field_aux[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]);
 
 #elif defined _GFLOW_CVC
         flow_fwd_gauge_spinor_field ( gauge_field_gf, spinor_work[1], gf_niter, gf_dt, 1, 1, 1 );
@@ -551,7 +548,6 @@ int main(int argc, char **argv) {
 
       } else {
 
-        if ( g_cart_id == 0 ) fprintf(stdout, "# [zchi_gf_invert_contract] no GF\n" );
 #ifdef _GFLOW_QUDA
         saveGaugeQuda ( h_gauge, &gauge_param );
         gauge_field_qdp_to_cvc ( gauge_field_aux, h_gauge );
@@ -566,81 +562,12 @@ int main(int argc, char **argv) {
 #endif
       plaquetteria  ( gauge_field_aux );
 
-      /***************************************************************************
-       * kinetic operator
-       ***************************************************************************/
-
-      double ** Dspinor_field = init_2level_dtable ( 2, _GSI( VOLUME ) );
-      if ( Dspinor_field == NULL )
-      {
-        fprintf ( stderr, "[zchi_gf_invert_contract] Error from init_level_table    %s %d\n", __FILE__, __LINE__ );
-        EXIT(1);
-      }
-
-      complex w_total = { 0., 0. };
-
-      // std::cout<<"Haobo: flowed prop: "  <<" "<<igf<<" "<<spinor_work[1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
-
-      for ( int mu = 0; mu < 4; mu++ )
-      {
-
-        spinor_field_eq_cov_displ_spinor_field ( Dspinor_field[0], spinor_work[1], mu, 0, gauge_field_aux );
-        // std::cout<<"Haobo: flowed prop 1: "  <<" "<<igf<<" "<<mu<<" "<<Dspinor_field[0][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
-
-        spinor_field_eq_cov_displ_spinor_field ( Dspinor_field[1], spinor_work[1], mu, 1, gauge_field_aux );
-        // std::cout<<"Haobo: flowed prop 2: "  <<" "<<igf<<" "<<mu<<" "<<Dspinor_field[1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
-
-        spinor_field_eq_spinor_field_mi_spinor_field ( Dspinor_field[0], Dspinor_field[0],  Dspinor_field[1], VOLUME );
-
-        spinor_field_eq_gamma_ti_spinor_field ( Dspinor_field[1], mu, Dspinor_field[0], VOLUME );
-
-        complex w = { 0., 0. };
-
-        spinor_scalar_product_co ( &w, spinor_work[0], Dspinor_field[1], VOLUME );
-
-        /***************************************************************************
-         * normalize to 1/2 x [ fwd deriv + bwd deriv ] / ( T x L^3 )
-         ***************************************************************************/
-        w.re *= 0.5 / (double)VOLUME / (double)g_nproc;
-        w.im *= 0.5 / (double)VOLUME / (double)g_nproc;
-
-        w_total.re += w.re;
-        w_total.im += w.im;
-
-        if ( io_proc == 2 )
-        {
-          int const ncdim = 1;
-          int const cdim[1] = {2};
-          char tag[100];
-          sprintf(filename, "%s.c%d.h5", outfile_prefix, Nconf );
-          sprintf ( tag, "/s%d/%s/tau%6.4f/mu%d", isample, "up", gf_tau, mu );
-          
-          write_h5_contraction ( &w, NULL, filename, tag, "double", ncdim, cdim );
-        }
-
-      }  /* end of loop on directions mu */
-
-      if ( io_proc == 2 )
-      {
-        int const ncdim = 1;
-        int const cdim[1] = {2};
-        char tag[100];
-        sprintf(filename, "%s.c%d.h5", outfile_prefix, Nconf );
-        sprintf ( tag, "/s%d/%s/tau%6.4f/mu%d", isample, "up", gf_tau, 4 );
-          
-        write_h5_contraction ( &w_total, NULL, filename, tag, "double", ncdim, cdim );
-      }
-
-
-      fini_2level_dtable ( &Dspinor_field );
-
     }  /* end of loop on GF steps  */
 
 #if defined _GFLOW_CVC
     flow_fwd_gauge_spinor_field ( NULL, NULL, 0, 0, 0, 0, 0 );
 #endif
 
-  }  /* end of loop on samples */
 
   fini_2level_dtable ( &spinor_work );
 

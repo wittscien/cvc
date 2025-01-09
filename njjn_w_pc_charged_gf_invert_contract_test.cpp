@@ -4,6 +4,7 @@
  *
  ***************************************************************************/
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -249,8 +250,8 @@ int main(int argc, char **argv) {
   int first_solve_dummy = 1;
 
   /* for gradient flow */
-  int gf_niter = 20;
-  int gf_ns = 2;
+  int gf_niter = 1;
+  int gf_ns = 1;
   double gf_dt = 0.01;
   double gf_tau = 0.;
   int gf_nb;
@@ -398,6 +399,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
+  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[njjn_w_pc_charged_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
@@ -499,6 +501,8 @@ int main(int argc, char **argv) {
      * draw a stochastic binary source (real, +/1 one per site )
      ***************************************************************************/
     ranbinary ( scalar_field[0], 2 * g_nsample_oet * VOLUME );
+    // Haobo
+    my_scalar_field ( scalar_field[0], VOLUME );
 
     /***************************************************************************
      * write loop field to lime file
@@ -617,6 +621,8 @@ int main(int argc, char **argv) {
   smear_param.meas_interval = 1;
   smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
   smear_param.restart       = QUDA_BOOLEAN_FALSE;
+  // Aniket
+  smear_param.restart = QUDA_BOOLEAN_FALSE;
 
   gf_tau = gf_niter * gf_dt;
 
@@ -1005,6 +1011,9 @@ int main(int argc, char **argv) {
               exitstatus = prepare_sequential_fht_twinpeak_source_crossed ( sequential_source, propagator[iflavor2],
                   scalar_field[isample],
                   sequential_gamma_id[igs][ig], icol1, icol2 );
+              // Haobo
+              std::cout<<"Haobo: sequential source: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
+
               if ( exitstatus != 0 ) 
               {
                 fprintf ( stderr, "[njjn_w_pc_charged_gf_invert_contract] Error from prepare_sequential_fht_twinpeak_source_crossed, status was %d %s %d\n", exitstatus, __FILE__, __LINE__ );
@@ -1034,6 +1043,8 @@ int main(int argc, char **argv) {
                 show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "_performGFlowAdjoint-restart", g_cart_id == 0 );
 #endif
               }
+              // Haobo
+              std::cout<<"Haobo: sequential source flowed: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
               /***************************************************************************
                * seq. prop. from seq. source
@@ -1050,6 +1061,8 @@ int main(int argc, char **argv) {
                 fprintf ( stderr, "[njjn_w_pc_charged_gf_invert_contract] Error from prepare_propagator_from_source, status was %d %s %d\n", exitstatus, __FILE__, __LINE__ );
                 EXIT(123);
               }
+              // Haobo
+              std::cout<<"Haobo: sequential prop: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 #if _TEST_TIMER
               gettimeofday ( &tb, (struct timezone *)NULL );
               show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "sequential-source-w-invert-check", g_cart_id == 0 );
@@ -1074,6 +1087,8 @@ int main(int argc, char **argv) {
                 show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );
 #endif
               }
+              // Haobo: checked
+              std::cout<<"Haobo: sequential prop flowed: "  <<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_propagator[iflavor][iflavor2][icol1][icol2][1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
             }}  /* end of loop on color components */
 

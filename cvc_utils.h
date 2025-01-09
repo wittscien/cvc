@@ -81,6 +81,8 @@ int rangauss (double * y1, unsigned int NRAND);
 void cm_proj(double *A);
 
 void contract_twopoint(double *contr, const int idsource, const int idsink, double **chi, double **phi, int n_c);
+void contract_twopoint_dev_cpff_gf ( double * const contr, const int idsource, const int idsink, double ** const chi, double ** const phi, int const n_s, int const n_c );
+
 
 void contract_twopoint_snk_momentum ( double * const contr, int const idsource, int const idsink, double ** const chi, double ** const phi, unsigned int const n_s, unsigned int const n_c, int const snk_mom[3], int const reduce );
 
@@ -102,6 +104,9 @@ int zero_sp_field (spinor_propagator_type *fp, unsigned int N );
 void free_fp_field(fermion_propagator_type **fp);
   
 int unit_gauge_field(double*g, unsigned int N);
+int my_gauge_field(double*g, unsigned int N);
+int my_spinor_field(double*g, unsigned int N);
+int my_scalar_field(double*g, unsigned int N);
 int write_contraction2 (double *s, char *filename, int Nmu, unsigned int items, int write_ascii, int append);
 void printf_fp(fermion_propagator_type f, char*name, FILE*ofs);
 void printf_sp(spinor_propagator_type f, char*name, FILE*ofs);

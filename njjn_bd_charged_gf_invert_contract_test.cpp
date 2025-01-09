@@ -110,6 +110,8 @@ static inline int reduce_project_write ( double ** vx, double *** vp, fermion_pr
   {
     fprintf (stdout, "# [reduce_project_write] write tag %s    %s %d\n", tag, __FILE__, __LINE__ );
   }
+  // Haobo
+  std::cout<<"Haobo: vp: "<<vp[4][0][(1*4+3)*2+0]<<std::endl;
 
 #if defined HAVE_HDF5
   exitstatus = contract_vn_write_h5 ( vp, nd, (char *)writer, tag, momentum_list, momentum_number, io_proc );
@@ -189,7 +191,7 @@ int main(int argc, char **argv) {
   int first_solve_dummy = 1;
 
   /* for gradient flow */
-  int gf_niter = 20;
+  int gf_niter = 1;
   int gf_ns = 1;
   double gf_dt = 0.01;
   double gf_tau = 0.;
@@ -339,10 +341,13 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
+  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
   }
+
+  // std::cout<<"Haobo: Gauge field: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
 #endif
 
   /***********************************************************
@@ -510,6 +515,8 @@ int main(int argc, char **argv) {
   smear_param.meas_interval = 1;
   smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
   smear_param.restart       = QUDA_BOOLEAN_FALSE;
+  // Aniket
+  smear_param.restart = QUDA_BOOLEAN_FALSE;
 
   gf_tau = gf_niter * gf_dt;
 
@@ -543,6 +550,8 @@ int main(int argc, char **argv) {
 
     int sx[4], source_proc_id = -1;
     exitstatus = get_point_source_info (gsx, sx, &source_proc_id);
+    // Haobo
+    // std::cout << "Haobo: source locations: " << gsx[0] << gsx[1] << gsx[2] << gsx[3] << sx[0] << sx[1] << sx[2] << sx[3];
     if( exitstatus != 0 ) {
       fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error from get_point_source_info status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
       EXIT(123);
@@ -667,10 +676,16 @@ int main(int argc, char **argv) {
       smear_param.meas_interval = 1;
       smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
       smear_param.restart       = QUDA_BOOLEAN_TRUE;
+      // Aniket
+      smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
       gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
+      // Haobo
+      // std::cout<<"Haobo: spinor point src: "<<point_source_flowed[(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+      // std::cout<<"Haobo: spinor point src: "<<*(point_source_flowed+(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0)<<std::endl;
       _performGFlowAdjoint ( point_source_flowed, point_source_flowed, &smear_param, gf_niter, gf_nb, gf_ns );
+      // std::cout<<"Haobo: spinor point src gf adj: "<< isc << "   " << point_source_flowed[(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
 #ifdef _TEST_TIMER
       gettimeofday ( &tb, (struct timezone *)NULL );
       show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowAdjoint-restart", g_cart_id == 0 );
@@ -694,6 +709,7 @@ int main(int argc, char **argv) {
          ***********************************************************/
         exitstatus = prepare_propagator_from_source ( propagator[iflavor]+isc, &point_source_flowed , 1, iflavor, 
                 0, 0, NULL, check_propagator_residual, gauge_field_with_phase, lmzz, NULL );
+        // std::cout<<"Haobo: gflow invert: "<< isc << "   "<<propagator[iflavor][isc][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
 
         if(exitstatus != 0) {
           fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error from prepare_propagator_from_source, status %d   %s %d\n", exitstatus, __FILE__, __LINE__);
@@ -725,10 +741,14 @@ int main(int argc, char **argv) {
         smear_param.meas_interval = 1;
         smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
         smear_param.restart       = QUDA_BOOLEAN_TRUE;
+        // Aniket
+        smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
         gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
         _performGFlowForward ( propagator[iflavor][isc], propagator[iflavor][isc], &smear_param, 0 );
+        //Haobo: look at 0 4 for flavor=u and sink spin=3,color=1
+        // std::cout<<"Haobo: gflow invert flowed: "<<propagator[iflavor][isc][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
 #ifdef _TEST_TIMER
         gettimeofday ( &tb, (struct timezone *)NULL );
         show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );
@@ -891,7 +911,7 @@ int main(int argc, char **argv) {
     for ( int i = 0; i < g_nsample; i++ )
     {
       char loop_filename[200];
-      sprintf ( loop_filename, "loop.up.c%d.N%d.tau%6.4f.lime", Nconf, i, gf_tau );
+      sprintf ( loop_filename, "loop_gf.up.c%d.N%d.tau%6.4f.lime", Nconf, i, gf_tau );
 
 #ifdef _TEST_TIMER
       gettimeofday ( &tb, (struct timezone *)NULL );
@@ -1013,6 +1033,23 @@ int main(int argc, char **argv) {
                * 
                * CHECK 1-iflavor flavor-id of propagator
                ***************************************************************************/
+
+
+              // Haobo
+              // if ((seq_source_type == 0) and (igamma == 0) and (iflavor == 0) and (iloop_flavor == 0))
+              // exitstatus = prepare_sequential_fht_loop_source ( 
+              //       sequential_source, 
+              //       loop, 
+              //       propagator[1-iflavor], 
+              //       sequential_gamma_list[igamma], 
+              //       sequential_gamma_num[igamma], 
+              //       NULL, 
+              //       seq_source_type, ( iloop_flavor == 0 ? NULL : &gammafive ) );
+
+              // std::cout<<"-------------------------"<<std::endl;
+              // break;
+
+
               exitstatus = prepare_sequential_fht_loop_source ( 
                     sequential_source, 
                     loop, 
@@ -1021,6 +1058,8 @@ int main(int argc, char **argv) {
                     sequential_gamma_num[igamma], 
                     NULL, 
                     seq_source_type, ( iloop_flavor == 0 ? NULL : &gammafive ) );
+              // Haobo: checked
+              // std::cout<<"Haobo: sequential source: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
               if ( exitstatus != 0 ) {
                 fprintf ( stderr, "[njjn_bd_charged_gf_invert_contract] Error from prepare_sequential_fht_loop_source, status was %d %s %d\n", exitstatus, __FILE__, __LINE__ );
@@ -1043,6 +1082,8 @@ int main(int argc, char **argv) {
                 smear_param.meas_interval = 1;
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
+                // Aniket
+                smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1079,6 +1120,8 @@ int main(int argc, char **argv) {
                 smear_param.meas_interval = 1;
                 smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
                 smear_param.restart       = QUDA_BOOLEAN_TRUE;
+                // Aniket
+                smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
                 gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
@@ -1088,6 +1131,8 @@ int main(int argc, char **argv) {
                 show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );
 #endif
               }
+              // Haobo: checked
+              // std::cout<<"Haobo: sequential prop: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<sequential_propagator[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
               /***************************************************************************
                *
@@ -1140,6 +1185,8 @@ int main(int argc, char **argv) {
                  ***************************************************************************/
                 assign_fermion_propagator_from_spinor_field ( fp, propagator[iflavor], VOLUME);
 
+              // Haobo
+              std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
                 /***************************************************************************
                  * fp <- fp x Gamma_i1 = fwd up x Gamma_i1
                  * in-place
@@ -1165,6 +1212,10 @@ int main(int argc, char **argv) {
                  ***************************************************************************/
                 fermion_propagator_field_eq_fermion_propagator_field_ti_re    ( fp3, fp3, -gamma_f1_sign[if1]*gamma_f1_sign[if2], VOLUME );
       
+              // Haobo
+              std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+              std::cout<<"Haobo: sequential prop fp2: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp2[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+              std::cout<<"Haobo: sequential prop fp3: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp3[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
                 /***************************************************************************
                  * diagram t1
                  ***************************************************************************/
