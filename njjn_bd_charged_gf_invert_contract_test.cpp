@@ -111,7 +111,7 @@ static inline int reduce_project_write ( double ** vx, double *** vp, fermion_pr
     fprintf (stdout, "# [reduce_project_write] write tag %s    %s %d\n", tag, __FILE__, __LINE__ );
   }
   // Haobo
-  std::cout<<"Haobo: vp: "<<vp[4][0][(1*4+3)*2+0]<<std::endl;
+  // std::cout<<"Haobo: vp: "<<vp[4][0][(1*4+3)*2+0]<<std::endl;
 
 #if defined HAVE_HDF5
   exitstatus = contract_vn_write_h5 ( vp, nd, (char *)writer, tag, momentum_list, momentum_number, io_proc );
@@ -341,6 +341,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
+  // Haobo
   exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
@@ -1185,8 +1186,8 @@ int main(int argc, char **argv) {
                  ***************************************************************************/
                 assign_fermion_propagator_from_spinor_field ( fp, propagator[iflavor], VOLUME);
 
-              // Haobo
-              std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+                // Haobo
+                // std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
                 /***************************************************************************
                  * fp <- fp x Gamma_i1 = fwd up x Gamma_i1
                  * in-place
@@ -1212,10 +1213,10 @@ int main(int argc, char **argv) {
                  ***************************************************************************/
                 fermion_propagator_field_eq_fermion_propagator_field_ti_re    ( fp3, fp3, -gamma_f1_sign[if1]*gamma_f1_sign[if2], VOLUME );
       
-              // Haobo
-              std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
-              std::cout<<"Haobo: sequential prop fp2: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp2[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
-              std::cout<<"Haobo: sequential prop fp3: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp3[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+                // Haobo
+                // std::cout<<"Haobo: sequential prop fp: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+                // std::cout<<"Haobo: sequential prop fp2: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp2[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
+                // std::cout<<"Haobo: sequential prop fp3: "<<iflavor<<" "<<seq_source_type<<" "<<igamma<<" "<<iloop_flavor<<" "<<fp3[((4*LX+0)*LY+3)*LZ+2][1*3+1][(3*3+1)*2+0]<<std::endl;
                 /***************************************************************************
                  * diagram t1
                  ***************************************************************************/
