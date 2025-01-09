@@ -187,6 +187,7 @@ int main(int argc, char **argv) {
   char filename[400];
   double **lmzz[2] = { NULL, NULL }, **lmzzinv[2] = { NULL, NULL };
   double *gauge_field_with_phase = NULL;
+  double *gauge_field_smeared = NULL;
   struct timeval ta, tb, start_time, end_time;
   int first_solve_dummy = 1;
 
@@ -493,6 +494,47 @@ int main(int argc, char **argv) {
 
   }  // end of if first_solve_dummy
 
+  // Haobo: copied from njjn_bd_charged_invert_contract.cpp
+  /***********************************************
+   * if we want to use Jacobi smearing, we need 
+   * smeared gauge field
+   ***********************************************/
+    std::cout<<"Haobo: Gauge field before smearing: "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+  if( N_Jacobi > 0 ) {
+
+#ifndef _SMEAR_QUDA 
+
+    alloc_gauge_field ( &gauge_field_smeared, VOLUMEPLUSRAND);
+
+    memcpy ( gauge_field_smeared, g_gauge_field, 72*VOLUME*sizeof(double));
+
+    if ( N_ape > 0 ) {
+#endif
+      exitstatus = APE_Smearing(gauge_field_smeared, alpha_ape, N_ape);
+      if(exitstatus != 0) {
+        fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from APE_Smearing, status was %d\n", exitstatus);
+        EXIT(47);
+      }
+#ifndef _SMEAR_QUDA 
+    }  /* end of if N_ape > 0 */
+
+    /***********************************************
+     * check plaquette value after APE smearing
+     *
+     * ONLY IF NOT SMEARING ON DEVICE
+     * in case of smearing on device, there is
+     * not any non-NULL smeared gauge field 
+     * pointer on host
+     ***********************************************/
+    exitstatus = plaquetteria( gauge_field_smeared );
+    if( exitstatus != 0 ) {
+      fprintf(stderr, "[njjn_bd_charged_invert_contract] Error from plaquetteria, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
+      EXIT(2);
+    }
+#endif
+  }  /* end of if N_Jacobi > 0 */
+  std::cout<<"Haobo: Gauge field after smearing: "<<gauge_field_smeared[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+
   /***************************************************************************
    * set to flowed links from now on, upload gauge field
    ***************************************************************************/
@@ -683,10 +725,8 @@ int main(int argc, char **argv) {
       gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
       // Haobo
-      // std::cout<<"Haobo: spinor point src: "<<point_source_flowed[(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
-      // std::cout<<"Haobo: spinor point src: "<<*(point_source_flowed+(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0)<<std::endl;
-      _performGFlowAdjoint ( point_source_flowed, point_source_flowed, &smear_param, gf_niter, gf_nb, gf_ns );
-      // std::cout<<"Haobo: spinor point src gf adj: "<< isc << "   " << point_source_flowed[(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+      // _performGFlowAdjoint ( point_source_flowed, point_source_flowed, &smear_param, gf_niter, gf_nb, gf_ns );
+      Jacobi_Smearing(gauge_field_smeared, point_source_flowed, N_Jacobi, kappa_Jacobi);
 #ifdef _TEST_TIMER
       gettimeofday ( &tb, (struct timezone *)NULL );
       show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowAdjoint-restart", g_cart_id == 0 );
@@ -748,8 +788,6 @@ int main(int argc, char **argv) {
         gettimeofday ( &ta, (struct timezone *)NULL );
 #endif
         _performGFlowForward ( propagator[iflavor][isc], propagator[iflavor][isc], &smear_param, 0 );
-        //Haobo: look at 0 4 for flavor=u and sink spin=3,color=1
-        // std::cout<<"Haobo: gflow invert flowed: "<<propagator[iflavor][isc][(((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
 #ifdef _TEST_TIMER
         gettimeofday ( &tb, (struct timezone *)NULL );
         show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "_performGFlowForward-restart", g_cart_id == 0 );
