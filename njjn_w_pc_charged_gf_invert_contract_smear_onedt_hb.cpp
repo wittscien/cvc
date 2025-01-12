@@ -66,8 +66,6 @@ extern "C"
 #include "fermion_quda.h"
 #include "gauge_quda.h"
 
-#define MAX_NUM_GF_NSTEP 100
-
 #define _OP_ID_UP 0
 #define _OP_ID_DN 1
 
@@ -222,10 +220,6 @@ int main(int argc, char **argv) {
     "gygz" 
   };
 
-  int gf_nstep = 0;
-  int gf_niter_list[MAX_NUM_GF_NSTEP];
-  double gf_dt_list[MAX_NUM_GF_NSTEP];
-
   int c;
   int filename_set = 0;
   int exitstatus;
@@ -258,10 +252,10 @@ int main(int argc, char **argv) {
   int first_solve_dummy = 1;
 
   /* for gradient flow */
-  // int gf_niter = 1;
+  int gf_niter = 1;
   int gf_ns = 1;
-  // double gf_dt = 0.01;
-  // double gf_tau = 0.;
+  double gf_dt = 0.01;
+  double gf_tau = 0.;
   int gf_nb;
 
 
@@ -647,15 +641,6 @@ int main(int argc, char **argv) {
   }  /* end of if N_Jacobi > 0 */
 
 
-  gf_nstep = 3;
-  double gf_dt_fixed = 0.01;
-  gf_niter_list[0] = 0;
-  for( int i = 1; i < gf_nstep; i++ )
-  {
-    gf_niter_list[i] = 1;
-  }
-
-
   /***************************************************************************
    * set to flowed links from now on, upload gauge field
    ***************************************************************************/
@@ -669,6 +654,22 @@ int main(int argc, char **argv) {
   show_time ( &ta, &tb, "njjn_bd_charged_gf_invert_contract", "loadGaugeQuda", g_cart_id == 0 );
 #endif
 
+
+  /***************************************************************************
+   * set gradient flow parameters
+   ***************************************************************************/
+  QudaGaugeSmearParam smear_param;
+  smear_param.n_steps       = gf_niter;
+  smear_param.epsilon       = gf_dt;
+  smear_param.meas_interval = 1;
+  smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
+  smear_param.restart       = QUDA_BOOLEAN_FALSE;
+  // Aniket
+  // smear_param.restart = QUDA_BOOLEAN_FALSE;
+
+  gf_tau = gf_niter * gf_dt;
+
+  gf_nb = (int) ceil ( pow ( (double)gf_niter , 1./ ( (double)gf_ns + 1. ) ) );
   if ( io_proc == 2 && g_verbose > 1 )
   {
     fprintf (stdout, "# [njjn_bd_charged_gf_invert_contract] gf_nb = %d   %s %d\n", gf_nb, __FILE__, __LINE__ );
@@ -779,12 +780,16 @@ int main(int argc, char **argv) {
       EXIT(123);
     }
 
-    /* up and down quark propagator */
-    double *** propagator_ps = init_3level_dtable ( 2, 12, _GSI( VOLUME ) );
-    if( propagator_ps == NULL ) {
-      fprintf(stderr, "[njjn_bd_charged_gf_invert_contract] Error from init_Xlevel_dtable %s %d\n", __FILE__, __LINE__);
-      EXIT(123);
-    }
+    /***************************************************************************
+     * allocate propagator fields
+     *
+     * these are ordered as as
+     * t,x,y,z,spin,color,spin,color
+     * so a 12x12 complex matrix per space-time point
+     ***************************************************************************/
+    fermion_propagator_type * fp  = create_fp_field ( VOLUME );
+    fermion_propagator_type * fp2 = create_fp_field ( VOLUME );
+    fermion_propagator_type * fp3 = create_fp_field ( VOLUME );
 
 #if _PART_PROP
     /***************************************************************************
@@ -814,11 +819,11 @@ int main(int argc, char **argv) {
       /***********************************************************
        * apply adjoint flow to the point source
        ***********************************************************/
-      // smear_param.n_steps       = gf_niter;
-      // smear_param.epsilon       = gf_dt;
-      // smear_param.meas_interval = 1;
-      // smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
-      // smear_param.restart       = QUDA_BOOLEAN_TRUE;
+      smear_param.n_steps       = gf_niter;
+      smear_param.epsilon       = gf_dt;
+      smear_param.meas_interval = 1;
+      smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
+      smear_param.restart       = QUDA_BOOLEAN_TRUE;
     // Aniket
     // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
@@ -843,7 +848,7 @@ int main(int argc, char **argv) {
          *
          * NOTE: quark flavor is controlled by value of iflavor
          ***********************************************************/
-        exitstatus = prepare_propagator_from_source ( propagator_ps[iflavor]+isc, &point_source_flowed , 1, iflavor,
+        exitstatus = prepare_propagator_from_source ( propagator[iflavor]+isc, &point_source_flowed , 1, iflavor,
                 0, 0, NULL, check_propagator_residual, gauge_field_with_phase, lmzz, NULL );
 
         if(exitstatus != 0) {
@@ -855,41 +860,9 @@ int main(int argc, char **argv) {
         gettimeofday ( &tb, (struct timezone *)NULL );
         show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "forward-light-invert-check", g_cart_id == 0 );
 #endif
-      }  /* end of loop on flavor */
-
-    }  /* end of loop on spin-color component */
-
-
-
-    // Haobo: add loop of gf steps
-    int gf_niter = 0;
-    for ( int igf = 0; igf < gf_nstep; igf++ ) 
-    {
-      gf_niter += gf_niter_list[igf];
-      // If gf_niter_list[0] == 0 then the first iteration no flow
-      double const gf_dt = igf == 0 and gf_niter_list[0] == 0 ? 0 : gf_dt_fixed;
-      double const gf_tau = gf_niter * gf_dt;
-      gf_nb = (int) ceil ( pow ( (double)gf_niter , 1./ ( (double)gf_ns + 1. ) ) );
-      QudaGaugeSmearParam smear_param;
-
-      // Copy S_ps
-      for ( int iflavor = 0; iflavor < 2; iflavor++ )
-      {
-        for ( int isc = 0; isc < 12; isc++ )
-        {
-          memcpy ( propagator[iflavor][isc], propagator_ps[iflavor][isc], sizeof_spinor_field );
-        }
-      }
-
-    for ( int isc = 0; isc < 12; isc++ )
-    {
-      for ( int iflavor = 0; iflavor < 2; iflavor++ ) 
-      {
         /***********************************************************
          * forward gradient flow at sink
          ***********************************************************/
-      if ( gf_tau > 0. )
-      {
 #ifdef _GFLOW_QUDA
         smear_param.n_steps       = gf_niter;
         smear_param.epsilon       = gf_dt;
@@ -908,23 +881,11 @@ int main(int argc, char **argv) {
 #endif
 
 #endif  // of _GFLOW_QUDA
-      }  /* end of if gf_tau > 0 */
 
       }  /* end of loop on flavor */
     }  // end of loop on spin-color components
 
 #endif  // of _PART_PROP
-
-    /***************************************************************************
-     * allocate propagator fields
-     *
-     * these are ordered as as
-     * t,x,y,z,spin,color,spin,color
-     * so a 12x12 complex matrix per space-time point
-     ***************************************************************************/
-    fermion_propagator_type * fp  = create_fp_field ( VOLUME );
-    fermion_propagator_type * fp2 = create_fp_field ( VOLUME );
-    fermion_propagator_type * fp3 = create_fp_field ( VOLUME );
 
 #if _PART_TWOP
     /***************************************************************************
@@ -1115,8 +1076,6 @@ int main(int argc, char **argv) {
               /***************************************************************************
                * adjoint flow to the sequential source
                ***************************************************************************/
-              if ( gf_tau > 0. )
-              {
               for ( int isc = 0; isc < 12; isc++ )
               {
                 smear_param.n_steps       = gf_niter;
@@ -1135,7 +1094,6 @@ int main(int argc, char **argv) {
                 show_time ( &ta, &tb, "njjn_w_pc_charged_gf_invert_contract", "_performGFlowAdjoint-restart", g_cart_id == 0 );
 #endif
               }
-              } /* end of if gf_tau > 0 */
               // Haobo
             //   std::cout<<"Haobo: sequential source flowed: "<<" "<<igs<<" "<<ig<<" "<<iflavor<<" "<<iflavor2<<" "<<icol1<<" "<<icol2<<" "<<sequential_source[1*3+1][(((((4*LX+0)*LY+3)*LZ+2)*4+3)*3+1)*2+0]<<std::endl;
 
@@ -1165,11 +1123,11 @@ int main(int argc, char **argv) {
                ***************************************************************************/
               for ( int isc = 0; isc < 12; isc++ )
               {
-                // smear_param.n_steps       = gf_niter;
-                // smear_param.epsilon       = gf_dt;
-                // smear_param.meas_interval = 1;
-                // smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
-                // smear_param.restart       = QUDA_BOOLEAN_TRUE;
+                smear_param.n_steps       = gf_niter;
+                smear_param.epsilon       = gf_dt;
+                smear_param.meas_interval = 1;
+                smear_param.smear_type    = QUDA_GAUGE_SMEAR_WILSON_FLOW;
+                smear_param.restart       = QUDA_BOOLEAN_TRUE;
                 // Aniket
                 // smear_param.restart = QUDA_BOOLEAN_FALSE;
 #ifdef _TEST_TIMER
@@ -1886,12 +1844,11 @@ int main(int argc, char **argv) {
       }
     }  /* end of if io_proc == 2 */
 #endif  /* of ifdef HAVE_LHPC_AFF */
-    }  /* end of loop on gf steps */
 
     /***************************************************************************
      * free propagator fields
      ***************************************************************************/
-    fini_3level_dtable ( &propagator_ps );
+    fini_3level_dtable ( &propagator );
 
   }  /* end of loop on source locations */
 

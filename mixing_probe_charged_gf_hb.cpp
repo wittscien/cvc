@@ -783,7 +783,7 @@ int main(int argc, char **argv) {
    ***************************************************************************/
   gf_nstep = 3;
   gf_niter_list[0] = 0;
-  gf_dt_list[0] = 0.01;
+  gf_dt_list[0] = 0;
   for( int i = 1; i < gf_nstep; i++ )
   {
     gf_niter_list[i] = 1;
