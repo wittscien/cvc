@@ -169,10 +169,11 @@ int APE_Smearing(double *smeared_gauge_field, double const APE_smearing_alpha, i
       _cm_eq_cm_ti_cm(M2, smeared_gauge_field_old + index_pz_1, M1);
       _cm_pl_eq_cm(U, M2);
   
-      _cm_ti_eq_re(U, APE_smearing_alpha);
+      // Haobo: change the convention here to match QUDA
+      _cm_ti_eq_re(U, APE_smearing_alpha / 4);
   
       /* center */
-      _cm_pl_eq_cm(U, smeared_gauge_field_old + index);
+      _cm_pl_eq_cm_ti_re(U, smeared_gauge_field_old + index, 1 - APE_smearing_alpha);
   
       // Haobo: checked
       // if (idx == (((3*LX+0)*LY+3)*LZ+2)) { std::cout<<"Haobo: APE smearing in: "<<*(U) << std::endl;}
@@ -227,10 +228,11 @@ int APE_Smearing(double *smeared_gauge_field, double const APE_smearing_alpha, i
       _cm_eq_cm_ti_cm(M2, smeared_gauge_field_old + index_pz_1, M1);
       _cm_pl_eq_cm(U, M2);
   
-      _cm_ti_eq_re(U, APE_smearing_alpha);
+      // Haobo: change the convention here to match QUDA
+      _cm_ti_eq_re(U, APE_smearing_alpha / 4);
   
       /* center */
-      _cm_pl_eq_cm(U, smeared_gauge_field_old + index);
+      _cm_pl_eq_cm_ti_re(U, smeared_gauge_field_old + index, 1 - APE_smearing_alpha);
   
       /* Projection to SU(3). */
       cm_proj(U);
@@ -280,10 +282,11 @@ int APE_Smearing(double *smeared_gauge_field, double const APE_smearing_alpha, i
       _cm_eq_cm_ti_cm(M2, smeared_gauge_field_old + index_py_1, M1);
       _cm_pl_eq_cm(U, M2);
   
-      _cm_ti_eq_re(U, APE_smearing_alpha);
+      // Haobo: change the convention here to match QUDA
+      _cm_ti_eq_re(U, APE_smearing_alpha / 4);
   
       /* center */
-      _cm_pl_eq_cm(U, smeared_gauge_field_old + index);
+      _cm_pl_eq_cm_ti_re(U, smeared_gauge_field_old + index, 1 - APE_smearing_alpha);
   
       /* Projection to SU(3). */
       cm_proj(U);

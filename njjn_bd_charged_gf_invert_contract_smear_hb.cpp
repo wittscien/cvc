@@ -540,6 +540,12 @@ int main(int argc, char **argv) {
 #endif
   }  /* end of if N_Jacobi > 0 */
 
+  // For checkign APE, Aniket and Haobo found the inconsistent convention
+  // gauge_param.type = QUDA_SMEARED_LINKS;
+  // saveGaugeQuda ( h_gauge, &gauge_param );
+  // std::cout<<"Haobo: Gauge field: "<<"  "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
+  // gauge_field_qdp_to_cvc ( g_gauge_field, h_gauge );
+  // std::cout<<"Haobo: Gauge field:  "<<"  "<<g_gauge_field[((((((3*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*3+0)*2+0]<<std::endl;
 
   gf_nstep = 3;
   double gf_dt_fixed = 0.01;
