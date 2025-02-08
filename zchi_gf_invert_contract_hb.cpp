@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
-  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+  // exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[zchi_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
@@ -396,7 +396,7 @@ int main(int argc, char **argv) {
   /***************************************************************************
    * gradient flow parameters
    ***************************************************************************/
-  gf_nstep = 3;
+  gf_nstep = 21;
   gf_niter_list[0] = 0;
   gf_dt_list[0] = 0;
   for( int i = 1; i < gf_nstep; i++ )
@@ -413,8 +413,8 @@ int main(int argc, char **argv) {
   {
 
     // Haobo
-    // prepare_volume_source ( spinor_work[0], VOLUME );
-    exitstatus = my_spinor_field ( spinor_work[0], VOLUME );
+    prepare_volume_source ( spinor_work[0], VOLUME );
+    // exitstatus = my_spinor_field ( spinor_work[0], VOLUME );
 
     /***************************************************************************
      * write loop field to lime file
@@ -492,6 +492,7 @@ int main(int argc, char **argv) {
      ***************************************************************************/
     for ( int igf = 0; igf < gf_nstep; igf++ )
     {
+      if ( g_cart_id == 0 ) fprintf(stdout, "# [zchi_gf_invert_contract] GF for igf = %d\n", igf );
       int const gf_niter   = gf_niter_list[igf];
       double const gf_dt   = gf_dt_list[igf];
       double const gf_dtau = gf_niter * gf_dt;
@@ -601,8 +602,8 @@ int main(int argc, char **argv) {
         /***************************************************************************
          * normalize to 1/2 x [ fwd deriv + bwd deriv ] / ( T x L^3 )
          ***************************************************************************/
-        w.re *= 0.5 / (double)VOLUME / (double)g_nproc;
-        w.im *= 0.5 / (double)VOLUME / (double)g_nproc;
+        w.re *= -1 / (double)VOLUME / (double)g_nproc;
+        w.im *= -1 / (double)VOLUME / (double)g_nproc;
 
         w_total.re += w.re;
         w_total.im += w.im;

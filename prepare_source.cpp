@@ -767,7 +767,10 @@ int init_timeslice_source_oet ( double ** const s, int const tsrc, int * const m
 
   static double *ran = NULL;
   double ratime, retime;
-  
+
+  // std::cout<<"Haobo: inside init_timeslice_source_oet: " << have_source << nsc << std::endl;
+  // 1 and 1
+
   ratime = _GET_TIME;
 
   if(init > 0) {
@@ -854,6 +857,9 @@ int init_timeslice_source_oet ( double ** const s, int const tsrc, int * const m
       fprintf ( stderr, "[init_timeslice_source_oet] Error from init_1level_dtable %s %d\n", __FILE__, __LINE__ );
       return ( 1 );
     }
+
+    // std::cout<<"Haobo: inside init_timeslice_source_oet, g_noise_type: " << g_noise_type << std::endl;
+    // 2
 
     switch(g_noise_type) {
       case 1:
@@ -957,6 +963,20 @@ int init_timeslice_source_oet ( double ** const s, int const tsrc, int * const m
     } /* end of if momentum != NULL */
 
 
+
+
+// Haobo
+// double * scalar_field = NULL;
+// scalar_field = init_1level_dtable ( 2*VOLUME );
+// my_scalar_field ( scalar_field, VOLUME );
+// for ( unsigned int ix=0; ix<VOL3; ix++) {
+//    buffer[2*ix] = scalar_field[2*(timeslice * VOL3 + ix)];
+//    buffer[2*ix+1] = scalar_field[2*(timeslice * VOL3 + ix)+1];
+// }
+
+
+
+
 #ifdef HAVE_OPENMP
 #pragma omp parallel for
 #endif
@@ -973,6 +993,7 @@ int init_timeslice_source_oet ( double ** const s, int const tsrc, int * const m
             for ( int k = 0; k < ncol; k++ ) {
               s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )  ] = buffer[2 * ( nsc * ix + ncol * j + k )  ];
               s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )+1] = buffer[2 * ( nsc * ix + ncol * j + k )+1];
+              // std::cout<<ix<<" "<<isc<<" "<<3 * (ispin)+(icol)<<" "<<s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )  ]<<std::endl;
      
           }}  /* end of loop on non-diluted spin-color indices */
           isc++;

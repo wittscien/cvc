@@ -3427,7 +3427,7 @@ void contract_twopoint_dev_cpff_gf ( double * const contr, const int idsource, c
     contr_tmp[2*x0  ] += tmp[0];
     contr_tmp[2*x0+1] += tmp[1];
   }  /* end of loop on volume */
-  std::cout<<"Haobo: inside contract_twopoint: "<<contr_tmp[3*2+1]<<std::endl;
+  // std::cout<<"Haobo: inside contract_twopoint: "<<contr_tmp[3*2+1]<<std::endl;
 
   #ifdef HAVE_OPENMP
   omp_set_lock ( &writelock );
@@ -4699,6 +4699,7 @@ int unit_gauge_field(double*g, unsigned int N) {
   return(0);
 }
 
+#if 0
 int my_gauge_field(double*g, unsigned int N) {
   for (int t=0; t<T; t++){
     for (int x=0; x<LX; x++){
@@ -29857,6 +29858,7 @@ int my_scalar_field(double*s, unsigned int N) {
       }
   return(0);
 }
+#endif
 
 /*****************************************************
  * write fp_prop in R-format

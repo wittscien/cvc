@@ -127,33 +127,6 @@ int main(int argc, char **argv) {
   int gf_niter_list[MAX_NUM_GF_NSTEP];
   double gf_dt_list[MAX_NUM_GF_NSTEP];
 
-#if 0
-  // example setting
-  gf_nstep = 10;
-
-  gf_niter_list[0] = 2;
-  gf_niter_list[1] = 2;
-  gf_niter_list[2] = 2;
-  gf_niter_list[3] = 2;
-  gf_niter_list[4] = 2;
-  gf_niter_list[5] = 2;
-  gf_niter_list[6] = 2;
-  gf_niter_list[7] = 2;
-  gf_niter_list[8] = 2;
-  gf_niter_list[9] = 2;
-
-  gf_dt_list[0] = 0.01;
-  gf_dt_list[1] = 0.01;
-  gf_dt_list[2] = 0.01;
-  gf_dt_list[3] = 0.01;
-  gf_dt_list[4] = 0.01;
-  gf_dt_list[5] = 0.01;
-  gf_dt_list[6] = 0.01;
-  gf_dt_list[7] = 0.01;
-  gf_dt_list[8] = 0.01;
-  gf_dt_list[9] = 0.01;
-#endif  // of if 0
-
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
 #endif
@@ -302,7 +275,7 @@ int main(int argc, char **argv) {
   }
 
   // Haobo
-  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+  // exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
 
 #endif
 
@@ -441,7 +414,7 @@ int main(int argc, char **argv) {
      ***************************************************************************/
     ranbinary ( scalar_field[0], 2 * g_nsample * VOLUME );
     // Haobo
-    my_scalar_field ( scalar_field[0], VOLUME );
+    // my_scalar_field ( scalar_field[0], VOLUME );
 
 
     //for ( unsigned int ix = 0; ix < g_nsample * VOLUME; ix++ )
@@ -597,7 +570,7 @@ int main(int argc, char **argv) {
   }
 #endif
 
-  gf_nstep = 3;
+  gf_nstep = 21;
   gf_niter_list[0] = 0;
   gf_dt_list[0] = 0;
   for( int i = 1; i < gf_nstep; i++ )
@@ -631,6 +604,7 @@ int main(int argc, char **argv) {
 #if _USE_TIME_DILUTION
     for ( int timeslice = 0; timeslice < T_global; timeslice ++ )
     {
+      if ( g_cart_id == 0 ) fprintf(stdout, "# [loop_gf_invert_contract] timeslice = %d\n", timeslice );
 #endif
       for ( int ispin = 0; ispin < 4; ispin++ ) 
       {

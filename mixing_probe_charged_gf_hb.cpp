@@ -81,9 +81,9 @@ extern "C"
 
 #define MAX_NUM_GF_NSTEP 100
 
-#define _USE_STOCHASTIC_OET 0
+#define _USE_STOCHASTIC_OET 1
 
-#define _USE_POINT_SOURCE 1
+#define _USE_POINT_SOURCE 0
 
 #if _USE_POINT_SOURCE
 #warning "using point-source method"
@@ -570,7 +570,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
-  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+  // exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[mixing_probe_src_oet_gf] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
@@ -781,7 +781,7 @@ int main(int argc, char **argv) {
    * TEST choice of gf iterations and discretization
    *
    ***************************************************************************/
-  gf_nstep = 3;
+  gf_nstep = 21;
   gf_niter_list[0] = 0;
   gf_dt_list[0] = 0;
   for( int i = 1; i < gf_nstep; i++ )
@@ -820,6 +820,8 @@ int main(int argc, char **argv) {
     double dts;
     ranlxd ( &dts , 1 );
     int gts = (int)(dts * T_global);
+    // Haobo
+    // gts = 7;
 
 #ifdef HAVE_MPI
     if (  MPI_Bcast( &gts, 1, MPI_INT, 0, g_cart_grid ) != MPI_SUCCESS ) {
@@ -918,6 +920,10 @@ int main(int argc, char **argv) {
       fprintf(stderr, "[mixing_probe_src_oet_gf] Error from init_timeslice_source_oet, status was %d %s %d\n", exitstatus, __FILE__, __LINE__);
       EXIT(64);
     }
+
+    // std::cout<<"Haobo: gts: " << gts << std::endl; // gts = 1
+    // std::cout<<"Haobo: init_timeslice_source_oet: "<<stochastic_source[1*3+1][(((((1*LX+0)*LY+3)*LZ+2)*4+1)*3+1)*2+0]<<std::endl;
+
 #elif _USE_POINT_SOURCE
     for( int i = 0; i < spin_color_dilution; i++)
     {
@@ -1089,6 +1095,7 @@ int main(int argc, char **argv) {
      ***********************************************************/
     for ( int igf = 0; igf < gf_nstep; igf++ ) 
     {
+      if ( g_cart_id == 0 ) fprintf(stdout, "# [mixing_probe_src_oet_gf] GF for igf = %d\n", igf );
       int const gf_niter = gf_niter_list[igf];
       double const gf_dt = gf_dt_list[igf];
       double const gf_dtau = gf_niter * gf_dt;

@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
 
   /* for gradient flow */
   // int gf_niter = 1;
-  int gf_ns = 1;
+  int gf_ns = 0;
   // double gf_dt = 0.01;
   // double gf_tau = 0.;
   int gf_nb;
@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
   if(exitstatus != 0) {
     EXIT(6);
   }
-  exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
+  // exitstatus = my_gauge_field ( g_gauge_field, VOLUME );
   if( g_gauge_field == NULL) {
     fprintf(stderr, "[njjn_w_pc_charged_gf_invert_contract] Error, g_gauge_field is NULL %s %d\n", __FILE__, __LINE__);
     EXIT(7);
@@ -510,7 +510,7 @@ int main(int argc, char **argv) {
      ***************************************************************************/
     ranbinary ( scalar_field[0], 2 * g_nsample_oet * VOLUME );
     // Haobo
-    my_scalar_field ( scalar_field[0], VOLUME );
+    // my_scalar_field ( scalar_field[0], VOLUME );
 
     /***************************************************************************
      * write loop field to lime file
@@ -647,7 +647,7 @@ int main(int argc, char **argv) {
   }  /* end of if N_Jacobi > 0 */
 
 
-  gf_nstep = 3;
+  gf_nstep = 21;
   double gf_dt_fixed = 0.01;
   gf_niter_list[0] = 0;
   for( int i = 1; i < gf_nstep; i++ )
@@ -865,6 +865,7 @@ int main(int argc, char **argv) {
     int gf_niter = 0;
     for ( int igf = 0; igf < gf_nstep; igf++ ) 
     {
+      if ( g_cart_id == 0 ) fprintf(stdout, "# [njjn_w_pc_charged_gf_invert_contract] GF for igf = %d\n", igf );
       gf_niter += gf_niter_list[igf];
       // If gf_niter_list[0] == 0 then the first iteration no flow
       double const gf_dt = igf == 0 and gf_niter_list[0] == 0 ? 0 : gf_dt_fixed;
