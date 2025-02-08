@@ -993,7 +993,7 @@ int init_timeslice_source_oet ( double ** const s, int const tsrc, int * const m
             for ( int k = 0; k < ncol; k++ ) {
               s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )  ] = buffer[2 * ( nsc * ix + ncol * j + k )  ];
               s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )+1] = buffer[2 * ( nsc * ix + ncol * j + k )+1];
-              // std::cout<<ix<<" "<<isc<<" "<<3 * (ispin)+(icol)<<" "<<s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )  ]<<std::endl;
+              // std::cout<<"Haobo: "<<ix<<" "<<isc<<" "<<3 * (ispin)+(icol)<<" "<<s[isc][ iix + 2 * ( 3 * (ispin*nspin+j)+(icol*ncol+k) )  ]<<std::endl;
      
           }}  /* end of loop on non-diluted spin-color indices */
           isc++;
